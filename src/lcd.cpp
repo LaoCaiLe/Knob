@@ -3,6 +3,14 @@
 
 TFT_eSPI tft = TFT_eSPI(240, 240);
 
+unsigned  get_remainder(int val)
+{
+	while(val <0)
+		val += 360;
+	while(val>=360)
+		val -= 360;
+	return val;
+}
 void Screen::task_tft(void)
 {
   char buf[10];
@@ -13,23 +21,24 @@ void Screen::task_tft(void)
 		// sensor.update();
 		// float now_radian = sensor.getSensorAngle();
 		int angle = motion.now_angle - motion.zero_angle;
-		// int angle = angle_err / PI * 180;
 
+		// int angle = angle_err / PI * 180;
+			Serial.printf("motion.now_angle[][0] = %.3f\n" , motion.now_angle);
+			Serial.printf("motion.zero_agle[][1] = %.3f\n" , motion.zero_angle);
 		tft.drawCentreString("             ", 90, 20, 4);
 		tft.drawCentreString(itoa(motion.now_angle, buf, 10), 90, 20, 4);
 		if(angle != last_angle)
 		{
 			tft.drawCentreString("           ", 120, 90, 7);
 			
-			tft.fillCircle(circle_coord[last_angle%360][0],circle_coord[last_angle%360][1], 3, TFT_BLACK);
+			tft.fillCircle(circle_coord[get_remainder(last_angle)][0],circle_coord[get_remainder(last_angle)][1], 3, TFT_BLACK);
 
 			// tft.fillRect(0, 0, 240, (6.28-radian_err) / 6.28 * 240, TFT_BLACK);
 
 			// tft.fillRect(0, (6.28-radian_err) / 6.28 * 240, 240, 240, TFT_RED);
-
+			
 			tft.drawCentreString(itoa(angle, buf, 10), 120, 90, 7);
-			tft.fillCircle(circle_coord[angle%360][0], circle_coord[angle%360][1], 3, TFT_GREEN);
-
+			tft.fillCircle(circle_coord[get_remainder(angle)][0], circle_coord[get_remainder(angle)][1], 3, TFT_GREEN);
 			
 			last_angle = angle;
 		}

@@ -50,13 +50,13 @@ void Motion::init()
 
     motor.PID_velocity.limit = 0.08;
 
-	zero_angle = sensor.getAngle()/PI*180;
+	zero_angle = sensor.getAngle()/PI*180.0f;
     target = zero_angle;
 }
 static void position_check()
 {
     static float gap_angle = 5;
-    motion.now_angle = sensor.getAngle()/PI*180;
+    motion.now_angle = sensor.getAngle()/PI*180.0f;
  
 
     if((motion.now_angle -motion.target) > gap_angle)
@@ -65,7 +65,7 @@ static void position_check()
     	digitalWrite(2, HIGH);
         if((motion.target-motion.zero_angle) < 100)
             motion.target += 10;
-
+        Serial.printf("circle_coord[][0] = %.3f\n" , motion.target);
         // if(motion.target >6.28)
         //     motion.target -= 6.28;
         // pulsation(8000,0.5,1);
@@ -78,6 +78,7 @@ static void position_check()
 
         if((motion.target-motion.zero_angle) > -100)
             motion.target -= 10;
+        Serial.printf("circle_coord[][0] = %.3f\n" , motion.target);
         // if(motion.target >6.28)
         //     motion.target -= 6.28;
 
@@ -97,7 +98,11 @@ void Motion::task_motor(void)
 		// sensor.update();
 		
 		motor.loopFOC();
-		motor.move(-(motion.target/180*PI+0.01));
+        // if(motion.target>0)
+            motor.move(-(motion.target / 180.0f * PI+err_angle ));
+        // else
+            // motor.move(-(motion.target / 180 * PI - 0.05));
+        // motor.move(-(motion.target));
 		vTaskDelay(2);
         position_check();
     }

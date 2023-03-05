@@ -17,9 +17,10 @@
 
 class Motion{
 public:
-    float zero_angle;
-    float now_angle;
+    int zero_angle;
+    int now_angle;
     float target;
+    float err_angle;
     void init();
     void task_motor(void);
 };

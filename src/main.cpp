@@ -19,7 +19,7 @@ void doTarget1(char* cmd) { command.scalar(&motor.PID_velocity.P, cmd); }
 void doTarget2(char* cmd) { command.scalar(&motor.PID_velocity.I, cmd); }
 void doTarget3(char* cmd) { command.scalar(&motor.P_angle.P, cmd); }
 void doTarget4(char* cmd) { command.scalar(&motor.P_angle.I, cmd); }
-void doTarget5(char* cmd) { command.scalar(&motor.PID_velocity.output_ramp, cmd); }
+void doTarget5(char* cmd) { command.scalar(&motion.err_angle, cmd); }
 void doTarget6(char* cmd) { command.scalar(&motor.P_angle.output_ramp, cmd); }
 void doTarget7(char* cmd) { command.scalar(&motor.PID_velocity.limit, cmd); }
 
@@ -35,7 +35,7 @@ void TaskOnTFT(void* params)
 void setup() {
 
 	Serial.begin(115200);
-	
+
 	pinMode(2, OUTPUT);
 
 	digitalWrite(2, HIGH);
