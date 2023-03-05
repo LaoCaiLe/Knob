@@ -2,17 +2,19 @@
 #define _LCD_H
 
 #include "TFT_eSPI.h" // Hardware-specific library
-
+#include "motor.h"
 extern TFT_eSPI tft;
 
 class Screen
 {
-    public:
-    void  fillArc(int x, int y, int start_angle, int seg_count, int rx, int ry, int w, unsigned int colour);
-    void  ArcPro(float weizhi, float total);
-    void  Pointer( float angle );
-    void  SreenUpdate(bool state, float zone ,int step);
+public:
+    void task_tft(void);
+    void init(void);
+
+    float circle_coord[360][2];
 };
 void lcd_init();
+
+extern Screen screen;
 
 #endif

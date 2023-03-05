@@ -15,9 +15,18 @@
 #define MOTOR_PWM2_PIN  14
 #define MOTOR_PWM3_PIN  26
 
+class Motion{
+public:
+    float zero_angle;
+    float now_angle;
+    float target;
+    void init();
+    void task_motor(void);
+};
 
-void init_angle(void);
-void Task_foc(void);
-void motor_shake(int strength, int delay_time);
-
+extern BLDCMotor motor;
+extern BLDCDriver3PWM driver;
+extern MagneticSensorI2C sensor;
+extern Motion motion;
+void pulsation(int16_t time, float Amplitude, int16_t count);
 #endif
