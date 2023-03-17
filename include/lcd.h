@@ -10,11 +10,9 @@ class Screen
 public:
     void task_tft(void);
     void init(void);
-
-    float circle_coord[360][2];
 };
-void lcd_init();
 
+void lv_knob_test();
 extern Screen screen;
 
 #endif

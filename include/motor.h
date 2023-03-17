@@ -2,10 +2,7 @@
 #define _MOTOR_H
 
 #include <SimpleFOC.h>
-// #include "BLDCMotor.h"
-#define pi 3.1415926
-#define init_smooth 1000 // 该值越大，初始化越慢。以防受到干扰。
-#define volt_limit 8.0000
+
 
 #define MOTOR_EN1_PIN   12
 #define MOTOR_EN2_PIN   27
@@ -19,10 +16,17 @@ class Motion{
 public:
     int zero_angle;
     int now_angle;
-    float target;
+    float target_angle;
+    int real_angle;
     float err_angle;
+    float motor_time;
+    float motor_N;
+    float m_min_angle;
+    float m_max_angle;
     void init();
     void task_motor(void);
+    void position_check(int min_angle, int max_angle, int count);
+    int fn31(u_int16_t Floors, float Floors_Zone_Du, int Touch_Feedback_Strength);
 };
 
 extern BLDCMotor motor;

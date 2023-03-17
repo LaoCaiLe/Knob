@@ -26,7 +26,7 @@ void Motion::init()
     // motor.voltage_limit = 3;
 	motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
     motor.torque_controller = TorqueControlType::voltage;
-    motor.controller = MotionControlType::angle;
+    motor.controller = MotionControlType::torque;
   	motor.sensor_direction = Direction::CCW;
 	motor.zero_electric_angle  = 5.3152;
 
@@ -51,44 +51,53 @@ void Motion::init()
     motor.PID_velocity.limit = 0.08;
 
 	zero_angle = sensor.getAngle()/PI*180.0f;
-    target = zero_angle;
+    target_angle = zero_angle;
+    target_angle = 0;
+    err_angle = 0.005;
 }
-static void position_check()
-{
-    static float gap_angle = 5;
-    motion.now_angle = sensor.getAngle()/PI*180.0f;
- 
 
-    if((motion.now_angle -motion.target) > gap_angle)
+void Motion::position_check(int min_angle, int max_angle, int count)
+{
+    m_min_angle = min_angle;
+    m_max_angle = max_angle;
+    int angle_range = max_angle - min_angle;
+    while(angle_range%count)
+        count--;
+    float gap_angle = angle_range/count/2;
+
+ 
+    if((now_angle -target_angle) > gap_angle)
     {
 
     	digitalWrite(2, HIGH);
-        if((motion.target-motion.zero_angle) < 100)
-            motion.target += 10;
-        Serial.printf("circle_coord[][0] = %.3f\n" , motion.target);
-        // if(motion.target >6.28)
-        //     motion.target -= 6.28;
-        // pulsation(8000,0.5,1);
-       
+        if((target_angle-zero_angle) < max_angle)
+            target_angle += angle_range/count;
+  
+       Serial.printf("zero_agle[][1] = %d\n" , target_angle);
+
+       if(target_angle>0 && err_angle<0)
+            err_angle = -err_angle;
     }
-    else if((motion.now_angle -motion.target) < -gap_angle)
+    else if((now_angle -target_angle) < -gap_angle)
     {
 	   
     	digitalWrite(2, HIGH);
 
-        if((motion.target-motion.zero_angle) > -100)
-            motion.target -= 10;
-        Serial.printf("circle_coord[][0] = %.3f\n" , motion.target);
-        // if(motion.target >6.28)
-        //     motion.target -= 6.28;
+        if((target_angle-zero_angle) > min_angle)
+            target_angle -= angle_range/count;
 
-        // pulsation(8000,0.5,2);
+        Serial.printf("zero_agle[][1] = %d\n" , target_angle);
+
+        if(target_angle<0 && err_angle>0)
+            err_angle = -err_angle;
     }
     else
 	    digitalWrite(2, LOW);
 
-    //  motor.controller = MotionControlType::angle;
+    motor.controller = MotionControlType::angle;
+    motor.loopFOC();
 
+    motor.move(-(motion.target_angle / 180.0f * PI+err_angle ));
 }
 void Motion::task_motor(void)
 {
@@ -97,30 +106,67 @@ void Motion::task_motor(void)
 	{
 		// sensor.update();
 		
-		motor.loopFOC();
-        // if(motion.target>0)
-            motor.move(-(motion.target / 180.0f * PI+err_angle ));
-        // else
-            // motor.move(-(motion.target / 180 * PI - 0.05));
-        // motor.move(-(motion.target));
-		vTaskDelay(2);
-        position_check();
+        
+        now_angle = sensor.getAngle()/PI*180.0f;
+        real_angle  = now_angle - zero_angle;
+		vTaskDelay(1);
+        // position_check(0,360,36);
+        fn31(36,360,2);
+        // motor.loopFOC();
+
+        // motor.move(target_angle);
+        
     }
   
 }
 
-void pulsation(int16_t time , float Amplitude , int16_t count)
+void pulsation(int time , float Amplitude , int16_t count)
 {
-  motor.controller = MotionControlType::torque;
-  float row = motor.PID_velocity.limit;
-  motor.PID_velocity.limit = 1;
-  while(count--)
-  {
-    motor.move(Amplitude);
-    delayMicroseconds(time);
-    motor.move(-Amplitude);
-    delayMicroseconds(time);
-  }
-  motor.move(0);
-  motor.PID_velocity.limit = row;
+//   motor.controller = MotionControlType::torque;
+//   float row = motor.PID_velocity.limit;
+//   motor.PID_velocity.limit = 1;
+    int p_time = time;
+    while(count--)
+    {
+        while(p_time--)
+        {
+            motor.loopFOC();
+            motor.move(Amplitude);
+            // digitalWrite(2, HIGH);
+        }
+        p_time = time;
+        while(p_time--)
+        {
+            motor.loopFOC();
+            motor.move(-Amplitude);
+            // digitalWrite(2, LOW);
+        }
+        p_time = time;
+
+    }
+    motor.move(0);
+//   motor.PID_velocity.limit = row;
+}
+int Motion::fn31(u_int16_t Floors , float Floors_Zone_Du , int Touch_Feedback_Strength)
+{
+    
+    static int last_zhendong = 0; //震动标志位
+    int count = Floors_Zone_Du / Floors; //360/12 =30
+    if(motion.real_angle%count==0)
+    {
+    	if(!last_zhendong) 
+        {
+            last_zhendong = true;
+            pulsation((int)5, 0.1, 1);
+        }
+    }
+    else
+    {
+    	
+        last_zhendong = false;
+    }        
+
+    motor.loopFOC();
+    motor.move(0);
+    return 0 ;
 }
