@@ -3,7 +3,18 @@
 
 #include <SimpleFOC.h>
 
+enum motor_rotation_type
+{
+    ROTATION_TYPE_TAP = 0,
+    ROTATION_TYPE_SHAKE,
+};
 
+enum motor_shake_level
+{
+    MOTOR_SHAKE_LEVEL_HIGH = 0,
+    MOTOR_SHAKE_LEVEL_MID,
+    MOTOR_SHAKE_LEVEL_LOW
+};
 #define MOTOR_EN1_PIN   12
 #define MOTOR_EN2_PIN   27
 #define MOTOR_EN3_PIN   25
@@ -26,12 +37,12 @@ public:
     void init();
     void task_motor(void);
     void position_check(int min_angle, int max_angle, int count);
-    int fn31(u_int16_t Floors, float Floors_Zone_Du, int Touch_Feedback_Strength);
+    int shake_mode(int min_angle, int max_angle, motor_shake_level shake_lv);
 };
 
 extern BLDCMotor motor;
 extern BLDCDriver3PWM driver;
 extern MagneticSensorI2C sensor;
 extern Motion motion;
-void pulsation(int16_t time, float Amplitude, int16_t count);
+void pulsation(int16_t time, float Amplitude);
 #endif

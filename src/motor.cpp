@@ -52,8 +52,27 @@ void Motion::init()
 
 	zero_angle = sensor.getAngle()/PI*180.0f;
     target_angle = zero_angle;
-    target_angle = 0;
     err_angle = 0.005;
+}
+
+void Motion::task_motor(void)
+{
+	
+	while(1)
+	{
+		sensor.update();
+		
+        
+        now_angle = sensor.getAngle()/PI*180.0f;
+        real_angle  = now_angle - zero_angle;
+		vTaskDelay(1);
+        // position_check(0,360,36);
+        shake_mode(-120, 120, MOTOR_SHAKE_LEVEL_LOW);
+        // motor.loopFOC();
+        // motor.move(target_angle);
+        
+    }
+  
 }
 
 void Motion::position_check(int min_angle, int max_angle, int count)
@@ -64,29 +83,21 @@ void Motion::position_check(int min_angle, int max_angle, int count)
     while(angle_range%count)
         count--;
     float gap_angle = angle_range/count/2;
-
  
     if((now_angle -target_angle) > gap_angle)
     {
-
     	digitalWrite(2, HIGH);
         if((target_angle-zero_angle) < max_angle)
             target_angle += angle_range/count;
-  
-       Serial.printf("zero_agle[][1] = %d\n" , target_angle);
 
        if(target_angle>0 && err_angle<0)
             err_angle = -err_angle;
     }
     else if((now_angle -target_angle) < -gap_angle)
     {
-	   
-    	digitalWrite(2, HIGH);
-
+	    digitalWrite(2, HIGH);
         if((target_angle-zero_angle) > min_angle)
             target_angle -= angle_range/count;
-
-        Serial.printf("zero_agle[][1] = %d\n" , target_angle);
 
         if(target_angle<0 && err_angle>0)
             err_angle = -err_angle;
@@ -97,76 +108,92 @@ void Motion::position_check(int min_angle, int max_angle, int count)
     motor.controller = MotionControlType::angle;
     motor.loopFOC();
 
-    motor.move(-(motion.target_angle / 180.0f * PI+err_angle ));
-}
-void Motion::task_motor(void)
-{
-	
-	while(1)
-	{
-		// sensor.update();
-		
-        
-        now_angle = sensor.getAngle()/PI*180.0f;
-        real_angle  = now_angle - zero_angle;
-		vTaskDelay(1);
-        // position_check(0,360,36);
-        fn31(36,360,2);
-        // motor.loopFOC();
-
-        // motor.move(target_angle);
-        
-    }
-  
+    motor.move(-(target_angle / 180.0f * PI+err_angle ));
 }
 
-void pulsation(int time , float Amplitude , int16_t count)
+
+void pulsation(int time , float Amplitude)
 {
-//   motor.controller = MotionControlType::torque;
+   
 //   float row = motor.PID_velocity.limit;
 //   motor.PID_velocity.limit = 1;
-    int p_time = time;
-    while(count--)
+    int p_time = time; 
+    while(p_time--)
     {
-        while(p_time--)
-        {
-            motor.loopFOC();
-            motor.move(Amplitude);
-            // digitalWrite(2, HIGH);
-        }
-        p_time = time;
-        while(p_time--)
-        {
-            motor.loopFOC();
-            motor.move(-Amplitude);
-            // digitalWrite(2, LOW);
-        }
-        p_time = time;
-
+        motor.loopFOC();
+        motor.move(Amplitude);
     }
+    p_time = time;
+    while(p_time--)
+    {
+        motor.loopFOC();
+        motor.move(-Amplitude);
+    }
+   
     motor.move(0);
 //   motor.PID_velocity.limit = row;
 }
-int Motion::fn31(u_int16_t Floors , float Floors_Zone_Du , int Touch_Feedback_Strength)
-{
-    
+int Motion::shake_mode(int min_angle, int max_angle, motor_shake_level shake_lv)
+{    
     static int last_zhendong = 0; //震动标志位
-    int count = Floors_Zone_Du / Floors; //360/12 =30
-    if(motion.real_angle%count==0)
+    target_angle = 0;
+     motor.controller = MotionControlType::torque;
+    if(real_angle<min_angle)
     {
-    	if(!last_zhendong) 
+        motor.controller = MotionControlType::angle;
+        target_angle = -((min_angle+zero_angle) / 180.0f * PI );
+        Serial.printf("target = %.3f", target_angle);
+
+        if(target_angle>0 && err_angle<0)
+            err_angle = -err_angle;
+        if(target_angle<0 && err_angle>0)
+            err_angle = -err_angle;
+
+        target_angle-=err_angle;
+
+    }
+    else if(real_angle>max_angle)
+    {
+        motor.controller = MotionControlType::angle;
+        // target_angle = max_angle;
+        target_angle = -((max_angle-zero_angle) / 180.0f * PI );
+        Serial.printf("target = %.3f", target_angle);
+
+        if(target_angle>0 && err_angle<0)
+            err_angle = -err_angle;
+        if(target_angle<0 && err_angle>0)
+            err_angle = -err_angle;
+        target_angle-=err_angle;
+    }
+    else if((real_angle%10==0)&& real_angle!=min_angle &&real_angle!=max_angle)
+    {
+        if(!last_zhendong)
         {
+           
             last_zhendong = true;
-            pulsation((int)5, 0.1, 1);
+            switch (shake_lv)
+            {
+            case MOTOR_SHAKE_LEVEL_LOW:
+                pulsation(10, 0.1);
+                break;
+            case MOTOR_SHAKE_LEVEL_MID:
+                pulsation(20, 0.1);
+                break;
+            case MOTOR_SHAKE_LEVEL_HIGH:
+                pulsation(20, 0.2);
+                break;
+            default:
+                break;
+            }    
         }
+            
     }
     else
-    {
-    	
+    {    	
+        motor.controller = MotionControlType::torque;
         last_zhendong = false;
-    }        
-
+    }
     motor.loopFOC();
-    motor.move(0);
+    motor.move(target_angle);
     return 0 ;
 }

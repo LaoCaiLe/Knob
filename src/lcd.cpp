@@ -12,29 +12,16 @@ TFT_eSPI tft = TFT_eSPI(MY_DISP_HOR_RES, MY_DISP_VER_RES);
 
 void Screen::task_tft(void)
 {
-  	char buf[10];
-	static int last_angle = 1;
+	char buf[10];
 	int show_angle;
-	// while(1)
-	{
-		// sensor.update();
-		// float now_radian = sensor.getSensorAngle();
 
-		// if(motion.real_angle != last_angle)
-		{
-			lv_arc_set_angles(arc, 0, motion.real_angle);     //设置前景圆弧角度
-			sprintf(buf, "%d", motion.real_angle);
-			lv_label_set_text(text_obj, buf);
-			show_angle = 240*(motion.real_angle-motion.m_min_angle) / (motion.m_max_angle-motion.m_min_angle);
-			if(motion.real_angle<=motion.m_max_angle)
-				lv_obj_set_y(color_bg, 240-show_angle);
-		
-			last_angle = motion.real_angle;
-		}
+	lv_arc_set_angles(arc, 0, motion.real_angle);     //设置前景圆弧角度
+	sprintf(buf, "%d", motion.real_angle);
+	lv_label_set_text(text_obj, buf);
+	show_angle = 240*(motion.real_angle-motion.m_min_angle) / (motion.m_max_angle-motion.m_min_angle);
+	if(motion.real_angle<=motion.m_max_angle)
+	lv_obj_set_y(color_bg, 240-show_angle);
 
-		// vTaskDelay(10);
-
-	}
 }
 
 static void disp_flush(lv_disp_drv_t * disp_drv, const lv_area_t * area, lv_color_t * color_p)
@@ -97,7 +84,6 @@ void lv_knob_test()
     lv_obj_set_size(bg, 240, 240);
     lv_obj_center(bg);
     lv_obj_clear_flag(bg, LV_OBJ_FLAG_SCROLLABLE);
-    
 
     color_bg = lv_obj_create(bg);
     lv_obj_set_size(color_bg, 240, 240);
@@ -113,20 +99,21 @@ void lv_knob_test()
     lv_obj_center(arc);
 	lv_arc_set_rotation(arc, -90);
 
+
 	static lv_style_t bg_style;
     lv_style_init(&bg_style);
     lv_style_set_arc_opa(&bg_style, LV_OPA_TRANSP);
 
 	static lv_style_t fg_style;
     lv_style_init(&fg_style);
-    // lv_style_set_color(&fg_style, lv_palette_main(LV_PALETTE_ORANGE));
+    lv_style_set_bg_color(&fg_style, lv_palette_main(LV_PALETTE_ORANGE));
     // lv_style_set_arc_rounded(&fg_style, 1);
     // lv_style_set_arc_width(&fg_style, 10);
-	lv_style_set_arc_width(&fg_style, 4);
 
+	lv_style_set_pad_all(&fg_style, 1); /*Makes the knob larger*/
 
 	lv_obj_add_style(arc, &bg_style, LV_PART_INDICATOR);    //添加前景style -> LV_PART_INDICATOR
     lv_obj_add_style(arc, &bg_style, LV_PART_MAIN);         //添加背景style -> LV_PART_MAIN
-	// lv_obj_add_style(arc, &fg_style, LV_PART_KNOB); 
+	lv_obj_add_style(arc, &fg_style, LV_PART_KNOB); 
 
 }
