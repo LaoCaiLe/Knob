@@ -16,8 +16,8 @@ Commander command = Commander(Serial);
 void doTarget(char* cmd) { command.scalar(&motion.target_angle, cmd); }
 void doTarget1(char* cmd) { command.scalar(&motor.PID_velocity.P, cmd); }
 void doTarget2(char* cmd) { command.scalar(&motor.PID_velocity.I, cmd); }
-void doTarget3(char* cmd) { command.scalar(&motor.P_angle.P, cmd); }
-void doTarget4(char* cmd) { command.scalar(&motor.P_angle.I, cmd); }
+void doTarget3(char* cmd) { command.scalar(&motor.LPF_velocity.Tf, cmd); }
+void doTarget4(char* cmd) { command.scalar(&motor.PID_velocity.output_ramp, cmd); }
 void doTarget5(char* cmd) { command.scalar(&motion.err_angle, cmd); }
 void doTarget6(char* cmd) { command.scalar(&motion.motor_time, cmd); }
 void doTarget8(char* cmd) { command.scalar(&motion.motor_N, cmd); }
@@ -49,7 +49,6 @@ void setup() {
 	xTaskCreatePinnedToCore(TaskOnMotor, "TaskOnMotor", 2048, NULL, 2, NULL, 0);
 
 	lv_timer_create(lv_timer_cb, 1, NULL);
-	// lv_timer_create(lv_timer_motor_cb, 1, NULL);
 	
 	command.add('T', doTarget, "target angle");
 	command.add('P', doTarget1, "target angle1");
