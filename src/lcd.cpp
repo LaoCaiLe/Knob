@@ -117,16 +117,16 @@ void lv_knob_test()
     lv_obj_set_style_text_font(text_obj, &lv_font_montserrat_48, 0);
     lv_obj_center(text_obj);
 
-	arc = lv_arc_create(bg);
-    lv_obj_set_size(arc, 230, 230);
-    lv_obj_center(arc);
-	lv_arc_set_rotation(arc, 270);
-
 	arc_beyond = lv_arc_create(bg);
     lv_obj_set_size(arc_beyond, 225, 225);
     lv_obj_center(arc_beyond);
 	lv_arc_set_rotation(arc_beyond, 270);
 	lv_obj_remove_style(arc_beyond, NULL, LV_PART_KNOB);
+
+    arc = lv_arc_create(bg);
+    lv_obj_set_size(arc, 230, 230);
+    lv_obj_center(arc);
+	lv_arc_set_rotation(arc, 270);
 
 	static lv_style_t hide_style;
     lv_style_init(&hide_style);

@@ -34,7 +34,7 @@ void Motion::init()
 	motor.PID_velocity.I = 4;
 	motor.PID_velocity.D = 0.000;
 	motor.PID_velocity.output_ramp = 1000;
-	motor.LPF_velocity.Tf = 0.1;
+	motor.LPF_velocity.Tf = 0.01;
 	motor.PID_velocity.limit = 0.2;
 
 	motor.P_angle.P = 20;
@@ -65,7 +65,7 @@ void Motion::task_motor(void)
         real_angle  = now_angle - zero_angle;
 		vTaskDelay(1);
         // position_check(-45,45,10);
-        shake_mode(-145, 45, MOTOR_SHAKE_LEVEL_LOW);
+        shake_mode(-45, 45, MOTOR_SHAKE_LEVEL_LOW);
         motor.loopFOC();
         if( motor.controller == MotionControlType::angle)
         {
@@ -167,33 +167,33 @@ int Motion::shake_mode(int min_angle, int max_angle, motor_shake_level shake_lv)
         //     err_angle = -err_angle;
         // target_angle-=err_angle;
     }
-    // else if((real_angle%10==0)&& real_angle!=min_angle &&real_angle!=max_angle)
-    // {
-    //     if(!last_zhendong)
-    //     {
+    else if((real_angle%10==0)&& real_angle!=min_angle &&real_angle!=max_angle)
+    {
+        if(!last_zhendong)
+        {
            
-    //         last_zhendong = true;
-    //         switch (shake_lv)
-    //         {
-    //         case MOTOR_SHAKE_LEVEL_LOW:
-    //             pulsation(10, 0.1);
-    //             break;
-    //         case MOTOR_SHAKE_LEVEL_MID:
-    //             pulsation(20, 0.1);
-    //             break;
-    //         case MOTOR_SHAKE_LEVEL_HIGH:
-    //             pulsation(20, 0.2);
-    //             break;
-    //         default:
-    //             break;
-    //         }    
-    //     }            
-    // }
-    // else
-    // {    	
-    //     motor.controller = MotionControlType::torque;
-    //     last_zhendong = false;
-    // }
+            last_zhendong = true;
+            switch (shake_lv)
+            {
+            case MOTOR_SHAKE_LEVEL_LOW:
+                pulsation(10, 0.1);
+                break;
+            case MOTOR_SHAKE_LEVEL_MID:
+                pulsation(20, 0.1);
+                break;
+            case MOTOR_SHAKE_LEVEL_HIGH:
+                pulsation(20, 0.2);
+                break;
+            default:
+                break;
+            }    
+        }            
+    }
+    else
+    {    	
+        motor.controller = MotionControlType::torque;
+        last_zhendong = false;
+    }
     motor.loopFOC();
     // motor.move(target_angle);
     return 0 ;
