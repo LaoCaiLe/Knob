@@ -23,27 +23,30 @@ void Screen::task_tft(void)
 
 	int show_angle;
 	float angle_persent = (motion.real_angle - motion.m_min_angle) / (motion.m_max_angle - motion.m_min_angle);
-		lv_arc_set_angles(arc, 0, motion.real_angle);
+    lv_arc_set_angles(arc, 0, motion.real_angle);
 
 	lv_label_set_text_fmt(text_obj, "%d", (int)(100*angle_persent));
 	show_angle = 240*angle_persent;
-	lv_obj_set_y(color_bg, 240-show_angle);
+	// 
 	if(motion.real_angle>=motion.m_max_angle)
 	{
-		lv_obj_set_y(color_bg, 0);
+        if(lv_obj_get_y(color_bg)!=0)
+		    lv_obj_set_y(color_bg, 0);
 		lv_arc_set_angles(arc_beyond, motion.m_max_angle, motion.real_angle);
 
 
 	}
 	else if(motion.real_angle<=motion.m_min_angle)
 	{
-		lv_obj_set_y(color_bg, 240);
+        if(lv_obj_get_y(color_bg)!=240)
+		    lv_obj_set_y(color_bg, 240);
 		lv_arc_set_angles(arc_beyond, 360+motion.real_angle, 360+motion.m_min_angle);
 
-		// lv_arc_set_mode(arc, LV_ARC_MODE_REVERSE);
 	}
 	else
 	{
+        if(lv_obj_get_y(color_bg)!=240-show_angle)
+            lv_obj_set_y(color_bg, 240-show_angle);
 		lv_arc_set_angles(arc_beyond, motion.real_angle, motion.real_angle);
 	}
 
