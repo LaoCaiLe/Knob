@@ -27,7 +27,7 @@ void Screen::task_tft(void)
 
 	lv_label_set_text_fmt(text_obj, "%d", (int)(100*angle_persent));
 	show_angle = 240*angle_persent;
-	// 
+ 
 	if(motion.real_angle>=motion.m_max_angle)
 	{
         if(lv_obj_get_y(color_bg)!=0)
