@@ -3,8 +3,8 @@
 #include "motor.h"
 #include "oled.h"
 
-// BLDCMotor motor = BLDCMotor(7,11);
-BLDCMotor motor = BLDCMotor(11,12.5);
+BLDCMotor motor = BLDCMotor(7,5.1);
+// BLDCMotor motor = BLDCMotor(11,12.5);
 BLDCDriver3PWM driver = BLDCDriver3PWM(MOTOR_PWM1_PIN, MOTOR_PWM2_PIN, MOTOR_PWM3_PIN, MOTOR_EN1_PIN, MOTOR_EN2_PIN, MOTOR_EN3_PIN);
 MagneticSensorI2C sensor = MagneticSensorI2C(AS5600_I2C);
 TwoWire I2Cone = TwoWire(1);
@@ -25,16 +25,23 @@ void Motion::init()
     motor.torque_controller = TorqueControlType::voltage;
     motor.controller = MotionControlType::torque;
   	motor.sensor_direction = Direction::CCW;
-	motor.zero_electric_angle  = 5.3152;
+	// motor.zero_electric_angle  = 5.3152;
+    motor.zero_electric_angle  = 1.7426;
 
-	motor.PID_velocity.P = 0.1;
-	motor.PID_velocity.I = 5;
+	// motor.PID_velocity.P = 0.1;
+	// motor.PID_velocity.I = 5;
+	// motor.PID_velocity.D = 0.000;
+	// motor.PID_velocity.output_ramp = 1000;
+	// motor.LPF_velocity.Tf = 0.05;
+	// motor.PID_velocity.limit = 0.2;
+    motor.PID_velocity.P = 0.02;
+	motor.PID_velocity.I = 1.5;
 	motor.PID_velocity.D = 0.000;
 	motor.PID_velocity.output_ramp = 1000;
-	motor.LPF_velocity.Tf = 0.05;
+	motor.LPF_velocity.Tf = 0.01;
 	motor.PID_velocity.limit = 0.2;
 
-	motor.P_angle.P = 20;
+	motor.P_angle.P = 10;
 	motor.P_angle.I = 0;
   	motor.P_angle.D = 0.0;
 	motor.P_angle.output_ramp = 1000.0;
@@ -45,7 +52,8 @@ void Motion::init()
 	motor.init();
 	motor.initFOC();
 
-    motor.PID_velocity.limit = 0.10;
+    // motor.PID_velocity.limit = 0.08;
+    motor.PID_velocity.limit = 0.2;
 
 	zero_angle = sensor.getAngle()/PI*180.0f;
     target_angle = zero_angle;
@@ -62,7 +70,7 @@ void Motion::task_motor(void)
         now_angle = sensor.getAngle()/PI*180.0f;
         real_angle  = now_angle - zero_angle;
 		vTaskDelay(1);
-        // position_check(0,360,12);
+        // position_check(-120,120,5);
         shake_mode(-90, 90, MOTOR_SHAKE_LEVEL_LOW);
         motor.loopFOC();
         if( motor.controller == MotionControlType::angle)
@@ -75,7 +83,7 @@ void Motion::task_motor(void)
         }
         else
             motor.move(target_angle);
-        }
+    }
   
 }
 
@@ -144,7 +152,7 @@ int Motion::shake_mode(int min_angle, int max_angle, motor_shake_level shake_lv)
         target_angle = min_angle+zero_angle;
     }
    
-    else if((real_angle%10==0) && real_angle!=min_angle &&real_angle!=max_angle)
+    else if((real_angle%10==0) && (real_angle>min_angle+10) && (real_angle<max_angle-10))
     {
         if(!last_zhendong)
         {           
