@@ -5,11 +5,13 @@
 #include "lvgl.h"
 #include "motor.h"
 #include "lcd.h"
+#include "ws2812.h"
 
 float target_position = 0;
 
 Motion motion;
 Screen screen;
+RGBLED rgb;
 
 Commander command = Commander(Serial);
 
@@ -28,15 +30,17 @@ void TaskOnMotor(void* params)
 	motion.task_motor();
 }
 
-
 static void lv_timer_cb(lv_timer_t *t)
 {
 	screen.task_tft();
 }
+
 void setup() {
 
 	Serial.begin(115200);
-
+	rgb.init();
+	rgb.setBrightness(0.1);
+	rgb.setRGB(0, 0, 100, 210);
 	pinMode(2, OUTPUT);
 
 	digitalWrite(2, HIGH);
