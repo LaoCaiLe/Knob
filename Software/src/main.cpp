@@ -10,7 +10,7 @@
 float target_position = 0;
 
 Motion motion;
-Screen screen
+Screen screen;
 
 #define LED_COUNT 8
 #define LED_PIN 32
