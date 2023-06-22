@@ -1,7 +1,7 @@
 // Open loop motor control example
 #include <SimpleFOC.h>
 #include "motor.h"
-#include "oled.h"
+// #include "oled.h"
 
 BLDCMotor motor = BLDCMotor(7,5.1);
 // BLDCMotor motor = BLDCMotor(11,12.5);

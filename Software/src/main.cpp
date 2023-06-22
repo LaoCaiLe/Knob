@@ -5,13 +5,17 @@
 #include "lvgl.h"
 #include "motor.h"
 #include "lcd.h"
-#include "ws2812.h"
+#include <WS2812FX.h>
 
 float target_position = 0;
 
 Motion motion;
-Screen screen;
-RGBLED rgb;
+Screen screen
+
+#define LED_COUNT 8
+#define LED_PIN 32
+
+WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
 
 Commander command = Commander(Serial);
 
@@ -34,14 +38,16 @@ static void lv_timer_cb(lv_timer_t *t)
 {
 	screen.task_tft();
 }
-
+uint32_t colors[] = {RED, GREEN,ORANGE,PURPLE };
 void setup() {
 
 	Serial.begin(115200);
-	rgb.init();
-	rgb.setBrightness(0.1);
-	rgb.setRGB(0, 0, 100, 210);
+	
 	pinMode(2, OUTPUT);
+	ws2812fx.init();
+  	ws2812fx.setBrightness(50);
+	ws2812fx.setSegment(0, 0, 7, FX_MODE_BREATH, colors, 1000, false);
+  	ws2812fx.start();
 
 	digitalWrite(2, HIGH);
 
@@ -54,20 +60,21 @@ void setup() {
 
 	lv_timer_create(lv_timer_cb, 1, NULL);
 	
-	command.add('T', doTarget, "target angle");
-	command.add('P', doTarget1, "target angle1");
-	command.add('I', doTarget2, "target angle2");
-	command.add('p', doTarget3, "target angle3");
-	command.add('i', doTarget4, "target angle4");
-	command.add('R', doTarget5, "target angle5");
-	command.add('r', doTarget6, "target angle4");
-	command.add('L', doTarget7, "target angle6");
-	command.add('N', doTarget8, "target angle6");
+	// command.add('T', doTarget, "target angle");
+	// command.add('P', doTarget1, "target angle1");
+	// command.add('I', doTarget2, "target angle2");
+	// command.add('p', doTarget3, "target angle3");
+	// command.add('i', doTarget4, "target angle4");
+	// command.add('R', doTarget5, "target angle5");
+	// command.add('r', doTarget6, "target angle4");
+	// command.add('L', doTarget7, "target angle6");
+	// command.add('N', doTarget8, "target angle6");
 }
 
 void loop() 
 {
 	command.run();
+  	ws2812fx.service();
 	lv_task_handler();
 
 }
