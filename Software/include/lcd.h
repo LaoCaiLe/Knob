@@ -8,8 +8,8 @@ extern TFT_eSPI tft;
 class Screen
 {
 public:
-    void task_tft(void);
-    void init(void);
+	void task_tft(void);
+	void init(void);
 };
 
 void lv_knob_test();
