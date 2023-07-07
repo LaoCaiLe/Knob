@@ -5,17 +5,15 @@
 #include "lvgl.h"
 #include "motor.h"
 #include "lcd.h"
-#include <WS2812FX.h>
+#include "led.h"
 
 float target_position = 0;
 
 Motion motion;
 Screen screen;
+ColorLed Cled(LED_PIN, LED_COUNT);
 
-#define LED_COUNT 8
-#define LED_PIN 2
-
-WS2812FX ws2812fx = WS2812FX(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+uint32_t colors[] = {RED, GREEN,ORANGE,PURPLE };
 
 Commander command = Commander(Serial);
 
@@ -38,27 +36,23 @@ static void lv_timer_cb(lv_timer_t *t)
 {
 	screen.task_tft();
 }
-uint32_t colors[] = {RED, GREEN,ORANGE,PURPLE };
+
 void setup() {
 
 	Serial.begin(115200);
 	
-	// pinMode(2, OUTPUT);
-	ws2812fx.init();
-	ws2812fx.setBrightness(255);
-	ws2812fx.setSegment(0, 0, 7, FX_MODE_BREATH, colors, 1000, false);
-	ws2812fx.start();
+	pinMode(2, OUTPUT);
+	digitalWrite(2, HIGH);
 
-	// digitalWrite(2, HIGH);
+	screen.init();
+	motion.init();
+	Cled.init();
+	Cled.set_color(100, colors);
+	digitalWrite(2, LOW);
 
-	// screen.init();
-	// motion.init();
-	
-	// digitalWrite(2, LOW);
+	xTaskCreatePinnedToCore(TaskOnMotor, "TaskOnMotor", 2048, NULL, 2, NULL, 0);
 
-	// xTaskCreatePinnedToCore(TaskOnMotor, "TaskOnMotor", 2048, NULL, 2, NULL, 0);
-
-	// lv_timer_create(lv_timer_cb, 1, NULL);
+	lv_timer_create(lv_timer_cb, 1, NULL);
 	
 	// command.add('T', doTarget, "target angle");
 	// command.add('P', doTarget1, "target angle1");
@@ -74,10 +68,6 @@ void setup() {
 void loop() 
 {
 	// command.run();
-	ws2812fx.service();
-	// lv_task_handler();
-	// digitalWrite(2, HIGH);
-	// sleep(2);
-	// digitalWrite(2, LOW);
-	// sleep(2);
+	lv_task_handler();
+	Cled.task();
 }
