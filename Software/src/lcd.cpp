@@ -33,15 +33,12 @@ void Screen::task_tft(void)
         if(lv_obj_get_y(color_bg)!=0)
             lv_obj_set_y(color_bg, 0);
         lv_arc_set_angles(arc_beyond, motion.m_max_angle, motion.real_angle);
-
-
     }
     else if(motion.real_angle<=motion.m_min_angle)
     {
         if(lv_obj_get_y(color_bg)!=240)
             lv_obj_set_y(color_bg, 240);
         lv_arc_set_angles(arc_beyond, 360+motion.real_angle, 360+motion.m_min_angle);
-
     }
     else
     {
@@ -146,11 +143,11 @@ void lv_knob_test()
     lv_style_set_bg_color(&knob_style, lv_palette_main(LV_PALETTE_ORANGE));
     lv_style_set_pad_all(&knob_style, -2);
 
-    lv_obj_add_style(arc, &hide_style, LV_PART_MAIN);         
+    lv_obj_add_style(arc, &hide_style, LV_PART_MAIN);
     lv_obj_add_style(arc, &hide_style, LV_PART_INDICATOR);
     lv_obj_add_style(arc, &knob_style, LV_PART_KNOB);
 
-    lv_obj_add_style(arc_beyond, &hide_style, LV_PART_MAIN);         
+    lv_obj_add_style(arc_beyond, &hide_style, LV_PART_MAIN);
     lv_obj_add_style(arc_beyond, &show_style, LV_PART_INDICATOR);
 
     static lv_obj_t* max_limit_line= lv_line_create(arc);
@@ -168,12 +165,12 @@ void lv_knob_test()
     min_line_points[1].x = 115 + sin(motion.m_min_angle * PI / 180 ) * 110;
     min_line_points[1].y = 115 - cos(motion.m_min_angle * PI / 180 ) * 110;
 
-    lv_line_set_points(max_limit_line, max_line_points, 2);    
+    lv_line_set_points(max_limit_line, max_line_points, 2);
     lv_obj_set_style_line_width(max_limit_line, 2, LV_PART_MAIN);
     lv_obj_set_style_line_rounded(max_limit_line, 1, LV_PART_MAIN);
     lv_obj_set_style_line_color(max_limit_line, lv_color_white(), 0);
 
-    lv_line_set_points(min_limit_line, min_line_points, 2);    
+    lv_line_set_points(min_limit_line, min_line_points, 2);
     lv_obj_set_style_line_width(min_limit_line, 2, LV_PART_MAIN);
     lv_obj_set_style_line_rounded(min_limit_line, 1, LV_PART_MAIN);
     lv_obj_set_style_line_color(min_limit_line, lv_color_white(), 0);
