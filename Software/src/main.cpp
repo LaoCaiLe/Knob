@@ -40,7 +40,7 @@ static void lv_timer_cb(lv_timer_t *t)
 void setup() {
 
     Serial.begin(115200);
-    
+
     pinMode(2, OUTPUT);
     digitalWrite(2, HIGH);
 

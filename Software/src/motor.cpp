@@ -1,7 +1,6 @@
 // Open loop motor control example
 #include <SimpleFOC.h>
 #include "motor.h"
-// #include "oled.h"
 
 BLDCMotor motor = BLDCMotor(7, 5.1);
 // BLDCMotor motor = BLDCMotor(11,12.5);
@@ -13,7 +12,7 @@ void Motion::init()
 {
     I2Cone.begin(SENSOR_SDA_PIN, SENSOR_SCL_PIN, 400000UL);
     sensor.init(&I2Cone);
-    motor.linkSensor(&sensor);    
+    motor.linkSensor(&sensor);
 
     driver.voltage_power_supply = 8;
     driver.init();
@@ -83,7 +82,7 @@ void Motion::task_motor(void)
         else
             motor.move(target_angle);
     }
-  
+
 }
 
 void Motion::position_check(int min_angle, int max_angle, int count)
@@ -105,12 +104,12 @@ void Motion::position_check(int min_angle, int max_angle, int count)
     {
         digitalWrite(2, HIGH);
         if((target_angle-zero_angle) > min_angle)
-            target_angle -= angle_range/count;        
+            target_angle -= angle_range/count;
     }
     else
         digitalWrite(2, LOW);
 
-    motor.controller = MotionControlType::angle;    
+    motor.controller = MotionControlType::angle;
 }
 
 
