@@ -41,14 +41,10 @@ void setup() {
 
     Serial.begin(115200);
 
-    pinMode(2, OUTPUT);
-    digitalWrite(2, HIGH);
-
     screen.init();
     motion.init();
     Cled.init();
     Cled.set_color(100, colors);
-    digitalWrite(2, LOW);
 
     xTaskCreatePinnedToCore(TaskOnMotor, "TaskOnMotor", 2048, NULL, 2, NULL, 0);
 
