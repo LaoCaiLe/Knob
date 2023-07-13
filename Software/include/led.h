@@ -12,7 +12,7 @@ public:
     ColorLed(uint8_t _pin, uint8_t _count) : WS2812FX(_count, _pin, NEO_GBR + NEO_KHZ800), pin(_pin), count(_count){}
     ~ColorLed() = default;
     void task();
-    void set_color(uint8_t Brightness, uint32_t colors[]);
+    void set_color(uint8_t Brightness, uint32_t colors);
 
 private:
     uint8_t pin = -1;

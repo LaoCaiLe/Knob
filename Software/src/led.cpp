@@ -7,7 +7,7 @@ void ColorLed::task()
     this->service();
 }
 
-void ColorLed::set_color(uint8_t Brightness, uint32_t colors[])
+void ColorLed::set_color(uint8_t Brightness, uint32_t colors)
 {
     if(pin == -1 || count == -1)
         return;

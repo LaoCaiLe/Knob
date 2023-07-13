@@ -2,8 +2,11 @@
 #include <SimpleFOC.h>
 #include "motor.h"
 
+#ifdef MOTOR_2804
 BLDCMotor motor = BLDCMotor(7, 5.1);
-// BLDCMotor motor = BLDCMotor(11,12.5);
+#elif define MOTOR_4008
+BLDCMotor motor = BLDCMotor(11,12.5);
+#endif
 BLDCDriver3PWM driver = BLDCDriver3PWM(MOTOR_PWM1_PIN, MOTOR_PWM2_PIN, MOTOR_PWM3_PIN, MOTOR_EN1_PIN, MOTOR_EN2_PIN, MOTOR_EN3_PIN);
 MagneticSensorI2C sensor = MagneticSensorI2C(AS5600_I2C);
 TwoWire I2Cone = TwoWire(1);
@@ -12,33 +15,40 @@ void Motion::init()
 {
     I2Cone.begin(SENSOR_SDA_PIN, SENSOR_SCL_PIN, 400000UL);
     sensor.init(&I2Cone);
+
     motor.linkSensor(&sensor);
 
     driver.voltage_power_supply = 8;
     driver.init();
     motor.linkDriver(&driver);
-
+#ifdef MOTOR_2804
     motor.current_limit = 0.3;
-    // motor.voltage_limit = 3;
+#elif define MOTOR_4008    
+    motor.voltage_limit = 3;
+#endif
     motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
     motor.torque_controller = TorqueControlType::voltage;
     motor.controller = MotionControlType::torque;
     motor.sensor_direction = Direction::CCW;
-    // motor.zero_electric_angle  = 5.3152;
-    motor.zero_electric_angle  = 1.7426;
 
-    // motor.PID_velocity.P = 0.1;
-    // motor.PID_velocity.I = 5;
-    // motor.PID_velocity.D = 0.000;
-    // motor.PID_velocity.output_ramp = 1000;
-    // motor.LPF_velocity.Tf = 0.05;
-    // motor.PID_velocity.limit = 0.2;
+#ifdef MOTOR_2804
+    motor.zero_electric_angle = 1.7426;
     motor.PID_velocity.P = 0.02;
     motor.PID_velocity.I = 1.5;
     motor.PID_velocity.D = 0.000;
     motor.PID_velocity.output_ramp = 1000;
     motor.LPF_velocity.Tf = 0.01;
     motor.PID_velocity.limit = 0.2;
+
+#elif define MOTOR_4008
+    motor.zero_electric_angle = 5.3152;
+    motor.PID_velocity.P = 0.1;
+    motor.PID_velocity.I = 5;
+    motor.PID_velocity.D = 0.000;
+    motor.PID_velocity.output_ramp = 1000;
+    motor.LPF_velocity.Tf = 0.05;
+    motor.PID_velocity.limit = 0.2;
+#endif
 
     motor.P_angle.P = 10;
     motor.P_angle.I = 0;
@@ -51,7 +61,6 @@ void Motion::init()
     motor.init();
     motor.initFOC();
 
-    // motor.PID_velocity.limit = 0.08;
     motor.PID_velocity.limit = 0.2;
 
     zero_angle = sensor.getAngle()/PI*180.0f;

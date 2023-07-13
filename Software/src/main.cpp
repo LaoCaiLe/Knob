@@ -13,7 +13,7 @@ Motion motion;
 Screen screen;
 ColorLed Cled(LED_PIN, LED_COUNT);
 
-uint32_t colors[] = {RED, GREEN,ORANGE,PURPLE };
+uint32_t colors = RED;
 
 Commander command = Commander(Serial);
 

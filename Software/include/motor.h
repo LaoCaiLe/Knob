@@ -3,6 +3,9 @@
 
 #include <SimpleFOC.h>
 
+#define MOTOR_2804
+// #define MOTOR_4008
+
 enum motor_rotation_type
 {
     ROTATION_TYPE_TAP = 0,
@@ -36,6 +39,7 @@ public:
     float motor_N;
     float m_min_angle;
     float m_max_angle;
+
     void init();
     void task_motor(void);
     void position_check(int min_angle, int max_angle, int count);
