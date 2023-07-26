@@ -1,14 +1,14 @@
 #include "scale.h"
 
-scale::scale(byte pin_dout, byte pin_sck)
+void Scale::init(byte pin_dout, byte pin_sck)
 {
     this->begin(pin_dout, pin_sck);
 }
 
-bool scale::is_press()
+bool Scale::is_press()
 {
-    long recv = this->read();
-    if (recv > max_threshold)
+    press_value = this->read();
+    if (press_value < max_threshold)
         return true;
     else
         return false;

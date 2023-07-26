@@ -6,14 +6,14 @@
 #include "motor.h"
 #include "lcd.h"
 #include "led.h"
+#include "scale.h"
 
 float target_position = 0;
 
 Motion motion;
 Screen screen;
+Scale scale;
 ColorLed Cled(LED_PIN, LED_COUNT);
-
-uint32_t colors = RED;
 
 Commander command = Commander(Serial);
 
@@ -37,19 +37,25 @@ static void lv_timer_cb(lv_timer_t *t)
     screen.task_tft();
 }
 
+void TaskOnLed(void* params)
+{
+    Cled.task();
+}
+
 void setup() {
 
     Serial.begin(115200);
 
     screen.init();
     motion.init();
+    scale.init(SCALE_OUT_PIN, SCALE_SCK_PIN);
     Cled.init();
-    Cled.set_color(100, colors);
 
-    xTaskCreatePinnedToCore(TaskOnMotor, "TaskOnMotor", 2048, NULL, 2, NULL, 0);
+    xTaskCreatePinnedToCore(TaskOnMotor, "TaskOnMotor", 4096, NULL, 2, NULL, 0);
+    xTaskCreatePinnedToCore(TaskOnLed, "TaskOnLed", 200000, NULL, 1, NULL, 1);
 
     lv_timer_create(lv_timer_cb, 1, NULL);
-    
+
     // command.add('T', doTarget, "target angle");
     // command.add('P', doTarget1, "target angle1");
     // command.add('I', doTarget2, "target angle2");
@@ -65,5 +71,4 @@ void loop()
 {
     // command.run();
     lv_task_handler();
-    Cled.task();
 }
