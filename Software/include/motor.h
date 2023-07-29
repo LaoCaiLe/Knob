@@ -6,18 +6,6 @@
 #define MOTOR_2804
 // #define MOTOR_4008
 
-enum motor_rotation_type
-{
-    ROTATION_TYPE_TAP = 0,
-    ROTATION_TYPE_SHAKE,
-};
-
-enum motor_shake_level
-{
-    MOTOR_SHAKE_LEVEL_HIGH = 0,
-    MOTOR_SHAKE_LEVEL_MID,
-    MOTOR_SHAKE_LEVEL_LOW
-};
 #define MOTOR_EN1_PIN   12
 #define MOTOR_EN2_PIN   27
 #define MOTOR_EN3_PIN   25
@@ -28,6 +16,33 @@ enum motor_shake_level
 
 #define SENSOR_SDA_PIN  16
 #define SENSOR_SCL_PIN  17
+
+
+enum Motor_Rotation_Type
+{
+    ROTATION_TYPE_NONE,
+    ROTATION_TYPE_TAP,
+    ROTATION_TYPE_SHAKE,
+};
+
+enum Motor_Shake_Lv
+{
+    MOTOR_SHAKE_LEVEL_NONE,
+    MOTOR_SHAKE_LEVEL_LOW,
+    MOTOR_SHAKE_LEVEL_MID,
+    MOTOR_SHAKE_LEVEL_HIGH,
+};
+struct motor_option_s{
+    int angle_start;
+    int angle_end;
+    int range;
+    char show_text[100];
+    Motor_Shake_Lv motor_shake_lv;
+    Motor_Rotation_Type motor_ratotion_type;
+
+};
+
+
 class Motion{
 public:
     int zero_angle;
@@ -35,15 +50,13 @@ public:
     float target_angle;
     int real_angle;
     float err_angle;
-    float motor_time;
-    float motor_N;
-    float m_min_angle;
-    float m_max_angle;
+    struct motor_option_s motor_option;
 
     void init();
     void task_motor(void);
-    void position_check(int min_angle, int max_angle, int count);
-    int shake_mode(int min_angle, int max_angle, motor_shake_level shake_lv);
+    void motor_run();
+    void position_check();
+    int shake_mode();
 };
 
 extern BLDCMotor motor;

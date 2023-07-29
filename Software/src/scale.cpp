@@ -8,7 +8,7 @@ void Scale::init(byte pin_dout, byte pin_sck)
 bool Scale::is_press()
 {
     press_value = this->read();
-    if (press_value < max_threshold)
+    if (press_value < threshold)
         return true;
     else
         return false;

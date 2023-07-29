@@ -15,9 +15,8 @@ public:
     void init(byte pin_dout, byte pin_sck);
     bool is_press();
     long press_value=0;
-
-private:
-    int max_threshold=192500;
+    bool is_Init_Thresh = false;
+    int threshold;
 
 };
 

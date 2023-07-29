@@ -10,9 +10,11 @@ class Screen
 public:
     void task_tft(void);
     void init(void);
+    bool is_init = false;
 };
 
 void lv_knob_test();
+void lv_knob_flash();
 extern Screen screen;
 
 #endif
