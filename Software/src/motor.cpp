@@ -34,7 +34,7 @@ void Motion::init()
 #ifdef MOTOR_2804
     motor.zero_electric_angle = 1.7426;
     motor.PID_velocity.P = 0.02;
-    motor.PID_velocity.I = 1.5;
+    motor.PID_velocity.I = 1.0;
     motor.PID_velocity.D = 0.000;
     motor.PID_velocity.output_ramp = 1000;
     motor.LPF_velocity.Tf = 0.01;
@@ -50,7 +50,7 @@ void Motion::init()
     motor.PID_velocity.limit = 0.2;
 #endif
 
-    motor.P_angle.P = 10;
+    motor.P_angle.P = 8;
     motor.P_angle.I = 0;
     motor.P_angle.D = 0.0;
     motor.P_angle.output_ramp = 1000.0;
@@ -69,12 +69,38 @@ void Motion::init()
     Serial.printf("zero_angle = %d\n", zero_angle);
 }
 
+static int meanFilterFloat(int arr[], int n) {
+    int sum = 0.0;
+    for (int i = 0; i < n; i++) {
+        sum += arr[i];
+    }
+    // 计算平均值并返回
+    return sum / n;
+}
+
 void Motion::task_motor(void)
 {
+    int i = 0;
+    bool is_1st_100=false;
+    int arr[100]={0};
+
     while(1)
     {
         sensor.update();
-        now_angle = sensor.getAngle()/PI*180.0f;
+
+        arr[i] = sensor.getAngle() / PI * 180.0f;
+        i++;
+        if(i==100)
+        {
+            is_1st_100 = true;
+            i = 0;
+        }
+
+        if(!is_1st_100)
+            now_angle = arr[i-1] ;
+        else
+            now_angle = meanFilterFloat(arr, 100);
+
         real_angle  = now_angle - zero_angle;
         vTaskDelay(1);
         // position_check(-120,120,5);
@@ -141,7 +167,7 @@ void pulsation(int time , float Amplitude)
 
     motor.move(0);
 }
-int Motion::shake_mode(int min_angle, int max_angle, motor_shake_level shake_lv)
+int Motion::shake_mode(int min_angle, int max_angle, Motor_Shake_Lv shake_lv)
 {
     m_min_angle = min_angle;
     m_max_angle = max_angle;
@@ -151,12 +177,12 @@ int Motion::shake_mode(int min_angle, int max_angle, motor_shake_level shake_lv)
     if(real_angle>max_angle)
     {
         motor.controller = MotionControlType::angle;
-        target_angle = max_angle+zero_angle;
+        target_angle = max_angle + zero_angle;
     }
     else if(real_angle<min_angle)
     {
         motor.controller = MotionControlType::angle;
-        target_angle = min_angle+zero_angle;
+        target_angle = min_angle + zero_angle;
     }
 
     else if((real_angle%10==0) && (real_angle>min_angle+10) && (real_angle<max_angle-10))
