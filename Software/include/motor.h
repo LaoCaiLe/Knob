@@ -33,7 +33,7 @@ enum Motor_Shake_Lv
     MOTOR_SHAKE_LEVEL_HIGH,
 };
 struct motor_option_s{
-    int angle_start;
+    int angle_begin;
     int angle_end;
     int range;
     char show_text[100];
@@ -52,11 +52,15 @@ public:
     float err_angle;
     struct motor_option_s motor_option;
 
-    void init();
+    int now_range;
+    int cur_angle_begin;
+    int cur_angle_end;
+
+    void init(void);
     void task_motor(void);
-    void motor_run();
-    void position_check();
-    int shake_mode();
+    void motor_run(void);
+    void position_check(void);
+    void shake_mode(void);
 };
 
 extern BLDCMotor motor;

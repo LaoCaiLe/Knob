@@ -13,8 +13,8 @@ public:
     bool is_init = false;
 };
 
-void lv_knob_test();
-void lv_knob_flash();
+void lv_knob_scene_init();
+void lv_knob_reflash();
 extern Screen screen;
 
 #endif

@@ -3,13 +3,17 @@
 
 static lv_obj_t *bg;
 static lv_obj_t *color_bg;
-static lv_obj_t *text_obj;
+static lv_obj_t *num_text_obj;
+static lv_obj_t *str_text_obj;
 static lv_obj_t *arc;
 static lv_obj_t *arc_beyond;
 static lv_obj_t* max_limit_line;
 static lv_obj_t* min_limit_line;
 static lv_point_t max_line_points[2];
 static lv_point_t min_line_points[2];
+
+LV_FONT_DECLARE(JetBrains_Momo_32)
+LV_FONT_DECLARE(JetBrains_Momo_40)
 
 #define MY_DISP_HOR_RES   240
 #define MY_DISP_VER_RES   240
@@ -22,32 +26,46 @@ void Screen::task_tft(void)
     float angle_persent;
     if(!is_init)
     {
-        lv_knob_test();
-        is_init = true;
+        lv_knob_scene_init();
     }
     
-    if(motion.motor_option.angle_end == motion.motor_option.angle_start)
+    if(motion.motor_option.angle_end == motion.motor_option.angle_begin)
+    {
         angle_persent = 0;
+        lv_label_set_text_fmt(num_text_obj, "%d", motion.real_angle);
+    }
+    else if(motion.motor_option.motor_ratotion_type == ROTATION_TYPE_TAP)
+    {
+        angle_persent = (float)(motion.real_angle - motion.motor_option.angle_begin) / (float)(motion.motor_option.angle_end - motion.motor_option.angle_begin);
+        lv_label_set_text_fmt(num_text_obj, "%d", motion.now_range);
+    }
     else
-        angle_persent = (float)(motion.real_angle - motion.motor_option.angle_start) / (float)(motion.motor_option.angle_end - motion.motor_option.angle_start);
-
+    {
+        angle_persent = (float)(motion.real_angle - motion.motor_option.angle_begin) / (float)(motion.motor_option.angle_end - motion.motor_option.angle_begin);
+        lv_label_set_text_fmt(num_text_obj, "%d", (int)(100 * angle_persent));
+    }
+    
     lv_arc_set_angles(arc, 0, motion.real_angle);
 
-    lv_label_set_text_fmt(text_obj, "%d", (int)(100*angle_persent));
-    // lv_label_set_text_fmt(text_obj, "%d", (int)(motion.real_angle));
     show_angle = 240*angle_persent;
- 
+    
     if(motion.real_angle>=motion.motor_option.angle_end)
     {
         if((lv_obj_get_y(color_bg)!=0) && (angle_persent != 0))
             lv_obj_set_y(color_bg, 0);
-        lv_arc_set_angles(arc_beyond, motion.motor_option.angle_end, motion.real_angle);
+        if((motion.real_angle-motion.motor_option.angle_end)<=360)
+            lv_arc_set_angles(arc_beyond, motion.motor_option.angle_end, motion.real_angle);
+        else
+            lv_arc_set_angles(arc_beyond, 0, 360);
     }
-    else if(motion.real_angle<=motion.motor_option.angle_start)
+    else if(motion.real_angle<=motion.motor_option.angle_begin)
     {
         if((lv_obj_get_y(color_bg)!=240 )&& (angle_persent != 0))
             lv_obj_set_y(color_bg, 240);
-        lv_arc_set_angles(arc_beyond, 360+motion.real_angle, 360+motion.motor_option.angle_start);
+        if((motion.motor_option.angle_begin-motion.real_angle)<=360)
+            lv_arc_set_angles(arc_beyond, 360+motion.real_angle, 360+motion.motor_option.angle_begin);
+        else
+            lv_arc_set_angles(arc_beyond, 0, 360);
     }
     else
     {
@@ -110,7 +128,7 @@ void Screen::init(void)
     lv_disp_drv_register(&disp_drv);
 }
 
-void lv_knob_test()
+void lv_knob_scene_init()
 {
     bg = lv_obj_create(lv_scr_act());
     lv_obj_set_size(bg, 240, 240);
@@ -122,9 +140,17 @@ void lv_knob_test()
     lv_obj_center(color_bg);
     lv_obj_set_style_bg_color(color_bg, lv_palette_main(LV_PALETTE_DEEP_PURPLE), LV_PART_MAIN);
 
-    text_obj = lv_label_create(bg);
-    lv_obj_set_style_text_font(text_obj, &lv_font_montserrat_48, 0);
-    lv_obj_center(text_obj);
+    num_text_obj = lv_label_create(bg);
+    lv_obj_set_style_text_font(num_text_obj, &JetBrains_Momo_40, 0);
+    lv_obj_center(num_text_obj);
+    lv_obj_set_y(num_text_obj, -25);
+
+    str_text_obj = lv_label_create(bg);
+    lv_obj_set_width(str_text_obj, 200);
+    lv_label_set_long_mode(str_text_obj, LV_LABEL_LONG_WRAP);
+    lv_obj_set_style_text_align(str_text_obj, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(str_text_obj, LV_ALIGN_CENTER, 0, 20);
+    lv_obj_set_style_text_font(str_text_obj, &JetBrains_Momo_32, 0);
 
     arc_beyond = lv_arc_create(bg);
     lv_obj_set_size(arc_beyond, 225, 225);
@@ -162,32 +188,25 @@ void lv_knob_test()
     max_limit_line= lv_line_create(arc);
     min_limit_line= lv_line_create(arc);
 
-    min_line_points[0].x = 115 + sin(motion.motor_option.angle_start * PI / 180 ) * 120;
-    min_line_points[0].y = 115 - cos(motion.motor_option.angle_start * PI / 180 ) * 120;
-    min_line_points[1].x = 115 + sin(motion.motor_option.angle_start * PI / 180 ) * 110;
-    min_line_points[1].y = 115 - cos(motion.motor_option.angle_start * PI / 180 ) * 110;
+    lv_knob_reflash();
 
-    lv_line_set_points(max_limit_line, max_line_points, 2);
-    lv_obj_set_style_line_width(max_limit_line, 2, LV_PART_MAIN);
-    lv_obj_set_style_line_rounded(max_limit_line, 1, LV_PART_MAIN);
-    lv_obj_set_style_line_color(max_limit_line, lv_color_white(), 0);
+    screen.is_init = true;
 
-    lv_line_set_points(min_limit_line, min_line_points, 2);
-    lv_obj_set_style_line_width(min_limit_line, 2, LV_PART_MAIN);
-    lv_obj_set_style_line_rounded(min_limit_line, 1, LV_PART_MAIN);
-    lv_obj_set_style_line_color(min_limit_line, lv_color_white(), 0);
 }
-void lv_knob_flash()
+void lv_knob_reflash()
 {
+
+    lv_obj_set_y(color_bg, 240);
+
     max_line_points[0].x = 115 + sin(motion.motor_option.angle_end * PI / 180 ) * 110;
     max_line_points[0].y = 115 - cos(motion.motor_option.angle_end * PI / 180 ) * 110;
     max_line_points[1].x = 115 + sin(motion.motor_option.angle_end * PI / 180 ) * 120;
     max_line_points[1].y = 115 - cos(motion.motor_option.angle_end * PI / 180 ) * 120;
     
-    min_line_points[0].x = 115 + sin(motion.motor_option.angle_start * PI / 180 ) * 120;
-    min_line_points[0].y = 115 - cos(motion.motor_option.angle_start * PI / 180 ) * 120;
-    min_line_points[1].x = 115 + sin(motion.motor_option.angle_start * PI / 180 ) * 110;
-    min_line_points[1].y = 115 - cos(motion.motor_option.angle_start * PI / 180 ) * 110;
+    min_line_points[0].x = 115 + sin(motion.motor_option.angle_begin * PI / 180 ) * 120;
+    min_line_points[0].y = 115 - cos(motion.motor_option.angle_begin * PI / 180 ) * 120;
+    min_line_points[1].x = 115 + sin(motion.motor_option.angle_begin * PI / 180 ) * 110;
+    min_line_points[1].y = 115 - cos(motion.motor_option.angle_begin * PI / 180 ) * 110;
 
     lv_line_set_points(max_limit_line, max_line_points, 2);
     lv_obj_set_style_line_width(max_limit_line, 2, LV_PART_MAIN);
@@ -198,4 +217,7 @@ void lv_knob_flash()
     lv_obj_set_style_line_width(min_limit_line, 2, LV_PART_MAIN);
     lv_obj_set_style_line_rounded(min_limit_line, 1, LV_PART_MAIN);
     lv_obj_set_style_line_color(min_limit_line, lv_color_white(), 0);
+
+    lv_label_set_text_fmt(str_text_obj, "%s", motion.motor_option.show_text);
+
 }

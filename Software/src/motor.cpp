@@ -2,6 +2,7 @@
 #include <SimpleFOC.h>
 #include "motor.h"
 #include "lcd.h"
+
 #ifdef MOTOR_2804
 BLDCMotor motor = BLDCMotor(7, 5.1);
 #elif define MOTOR_4008
@@ -13,14 +14,40 @@ TwoWire I2Cone = TwoWire(1);
 
 struct motor_option_s motor_option_t[] =
 {
-    {0, 0, -1,"auto center", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_NONE},
-    {0, 60, 1,"switch", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP },
-    {0, 360, 1,"null",MOTOR_SHAKE_LEVEL_LOW, ROTATION_TYPE_SHAKE},
-    {-90, 90, 1,"null",MOTOR_SHAKE_LEVEL_LOW, ROTATION_TYPE_SHAKE},
+    {0, 0, -1, "No Limit", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_NONE},
+    {0, 0, -1, "Auto Center", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 60, 1, "Switch", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 360, 6, "6 taps", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 360, 10, "10 taps", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 360, 1, "2PI Limit", MOTOR_SHAKE_LEVEL_LOW, ROTATION_TYPE_SHAKE},
+    {-90, 90, 1, "PI Limit", MOTOR_SHAKE_LEVEL_MID, ROTATION_TYPE_SHAKE},
 };
 
+int max_option_index = sizeof(motor_option_t) / sizeof(struct motor_option_s);
 int option_index = 0;
 int last_option_index = -1;
+
+static void pulsation(int time , float Amplitude)
+{
+    motor.controller = MotionControlType::torque;
+
+    int p_time = time;
+    while(p_time--)
+    {
+        motor.loopFOC();
+        motor.move(-Amplitude);
+        vTaskDelay(1);
+    }
+    p_time = time;
+    while(p_time--)
+    {
+        vTaskDelay(1);
+        motor.loopFOC();
+        motor.move(Amplitude);
+    }
+
+    motor.move(0);
+}
 
 void Motion::init()
 {
@@ -61,44 +88,68 @@ void Motion::init()
     motor.PID_velocity.limit = 0.2;
 #endif
 
-    motor.P_angle.P = 30;
-    motor.P_angle.I = 0.1;
+    motor.P_angle.P = 20;
+    motor.P_angle.I = 0;
     motor.P_angle.D = 0.0;
     motor.P_angle.output_ramp = 1000.0;
-    motor.P_angle.limit = 20;
+    motor.P_angle.limit = 30;
     motor.LPF_angle.Tf = 0.01;
+    err_angle = 0.005;
 
-    // 初始化电机
     motor.init();
     motor.initFOC();
 
-    motor.PID_velocity.limit = 0.2;
-
-    zero_angle = sensor.getAngle()/PI*180.0f;
-    // target_angle = zero_angle;
-    err_angle = 0.005;
-    Serial.printf("zero_angle = %d\n", zero_angle);
+    motor.PID_velocity.limit = 0.25;
 }
+
+static int meanFilterFloat(int arr[], int n)
+{
+    int sum = 0.0;
+    for (int i = 0; i < n; i++) {
+        sum += arr[i];
+    }
+
+    return sum / n;
+}
+
 
 void Motion::task_motor(void)
 {
     int i = 0;
-    bool is_1st_100=false;
-    int arr[200]={0};
+    bool is_enough = false;
+    int arr[100] = {0};
 
     while(1)
     {
         sensor.update();
-        now_angle= sensor.getAngle()* 180.0f / PI ;
-        // arr[i] = sensor.getAngle() / PI * 180.0f;
-        real_angle = now_angle - zero_angle ;
+
+        arr[i++] = sensor.getAngle() / PI * 180.0f;
+        if(i==sizeof(arr)/sizeof(int))
+        {
+            is_enough = true;
+            i = 0;
+        }
+
+        if(!is_enough)
+            now_angle = arr[i-1] ;
+        else
+            now_angle = meanFilterFloat(arr, sizeof(arr)/sizeof(int));
+
+        // now_angle= sensor.getAngle() * 180.0f / PI;
+        real_angle = now_angle - zero_angle;
         vTaskDelay(1);
         if(last_option_index != option_index)
         {
             motor_option = motor_option_t[option_index];
-            if (screen.is_init)lv_knob_flash();
+            pulsation(5, 0.1);
+            if (screen.is_init) 
+                lv_knob_reflash();
             zero_angle = sensor.getAngle()/PI*180.0f;
             last_option_index = option_index;
+
+            cur_angle_end = motor_option.angle_begin+(motor_option.angle_end - motor_option.angle_begin) / motor_option.range ;
+            cur_angle_begin = motor_option.angle_begin;
+            now_range = 0;
         }
         motor_run();
         
@@ -135,74 +186,51 @@ void Motion::motor_run()
 }
 void Motion::position_check()
 {
-    int count = motor_option.range;
-   
-    // motor_option_t.angle_start = min_angle;
-    // motor_option_t.angle_end = max_angle;
-    // motor_option = motor_option_t;
-    int angle_range = motor_option.angle_end - motor_option.angle_start;
-    while(angle_range % count)
-        count--;
-    float gap_angle = angle_range/count/2;
- 
-    if((now_angle -target_angle) > gap_angle)
+    float gap_angle = (motor_option.angle_end - motor_option.angle_begin) / motor_option.range / 2;
+
+    if((now_angle - target_angle) > gap_angle &&(target_angle-zero_angle ) < cur_angle_end)
     {
-        if((target_angle-zero_angle ) < motor_option.angle_end)
-        {
-            target_angle = motor_option.angle_end+zero_angle;
-        }
+        target_angle = cur_angle_end + zero_angle;
+        now_range++;
     }
-    else if((now_angle -target_angle) < -gap_angle)
+    else if((now_angle -target_angle) < -gap_angle && (target_angle-zero_angle ) > cur_angle_begin)
     {
-        if((target_angle-zero_angle ) > motor_option.angle_start)
-        {
-            target_angle =motor_option.angle_start+zero_angle;
-        }
+        target_angle = cur_angle_begin + zero_angle;
+        now_range--;
+    }
+
+    if((now_angle - target_angle) > gap_angle && cur_angle_end < motor_option.angle_end )
+    {
+        cur_angle_end += gap_angle * 2;
+        cur_angle_begin += gap_angle * 2;
+        
+    }
+    else if((now_angle -target_angle) < -gap_angle && cur_angle_begin > motor_option.angle_begin)
+    {
+        cur_angle_end -= gap_angle * 2;
+        cur_angle_begin -= gap_angle * 2;
     }
 
     motor.controller = MotionControlType::angle;
 }
 
-static void pulsation(int time , float Amplitude)
+void Motion::shake_mode()
 {
-    motor.controller = MotionControlType::torque;
-
-    int p_time = time; 
-    while(p_time--)
-    {
-        motor.loopFOC();
-        motor.move(-Amplitude);
-    }
-    p_time = time;
-    while(p_time--)
-    {
-        motor.loopFOC();
-        motor.move(Amplitude);
-    }
-
-    motor.move(0);
-}
-
-int Motion::shake_mode()
-{
-
     static int last_zhendong = 0; //震动标志位
     target_angle = 0;
 
     if(real_angle>motor_option.angle_end)
     {
         motor.controller = MotionControlType::angle;
-        target_angle = motor_option.angle_end + zero_angle  ;
-        Serial.printf("target_angle %f\n", target_angle);
+        target_angle = motor_option.angle_end + zero_angle;
     }
-    else if(real_angle<motor_option.angle_start)
+    else if(real_angle<motor_option.angle_begin)
     {
         motor.controller = MotionControlType::angle;
-        target_angle = motor_option.angle_start + zero_angle  ;
-        Serial.printf("target_angle %f\n", target_angle);
+        target_angle = motor_option.angle_begin + zero_angle;
     }
 
-    else if((real_angle%10==0) && (real_angle>motor_option.angle_start+10) && (real_angle<motor_option.angle_end-10))
+    else if((real_angle%10==0) && (real_angle>motor_option.angle_begin+10) && (real_angle<motor_option.angle_end-10))
     {
         if(!last_zhendong)
         {
@@ -210,13 +238,13 @@ int Motion::shake_mode()
             switch (motor_option.motor_shake_lv)
             {
                 case MOTOR_SHAKE_LEVEL_LOW:
-                    pulsation(10, 0.1);
+                    pulsation(8, 0.1);
                     break;
                 case MOTOR_SHAKE_LEVEL_MID:
-                    pulsation(20, 0.1);
+                    pulsation(10, 0.1);
                     break;
                 case MOTOR_SHAKE_LEVEL_HIGH:
-                    pulsation(20, 0.2);
+                    pulsation(15, 0.1);
                     break;
                 default:
                     break;
@@ -229,6 +257,5 @@ int Motion::shake_mode()
         last_zhendong = false;
     }
     motor.loopFOC();
-    return 0 ;
 }
 
