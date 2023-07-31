@@ -2,6 +2,7 @@
 #define _MOTOR_H
 
 #include <SimpleFOC.h>
+#include <BleKeyboard.h>
 
 #define MOTOR_2804
 // #define MOTOR_4008
@@ -22,22 +23,21 @@ enum Motor_Rotation_Type
 {
     ROTATION_TYPE_NONE,
     ROTATION_TYPE_TAP,
-    ROTATION_TYPE_SHAKE,
+    ROTATION_TYPE_DRAG,
 };
 
-enum Motor_Shake_Lv
+enum Motor_Drag_Lv
 {
-    MOTOR_SHAKE_LEVEL_NONE,
-    MOTOR_SHAKE_LEVEL_LOW,
-    MOTOR_SHAKE_LEVEL_MID,
-    MOTOR_SHAKE_LEVEL_HIGH,
+    MOTOR_STRENGTH_LEVEL_NONE,
+    MOTOR_STRENGTH_LEVEL_LOW,
+    MOTOR_STRENGTH_LEVEL_HIGH,
 };
 struct motor_option_s{
     int angle_begin;
     int angle_end;
     int range;
     char show_text[100];
-    Motor_Shake_Lv motor_shake_lv;
+    Motor_Drag_Lv motor_shake_lv;
     Motor_Rotation_Type motor_ratotion_type;
 
 };
@@ -66,6 +66,7 @@ public:
 extern BLDCMotor motor;
 extern BLDCDriver3PWM driver;
 extern MagneticSensorI2C sensor;
+// extern BleKeyboard bleKeyboard;
 extern Motion motion;
 void pulsation(int16_t time, float Amplitude);
 #endif

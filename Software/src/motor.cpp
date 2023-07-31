@@ -14,20 +14,20 @@ TwoWire I2Cone = TwoWire(1);
 
 struct motor_option_s motor_option_t[] =
 {
-    {0, 0, -1, "No Limit", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_NONE},
-    {0, 0, -1, "Auto Center", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
-    {0, 60, 1, "Switch", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
-    {0, 360, 6, "6 taps", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
-    {0, 360, 10, "10 taps", MOTOR_SHAKE_LEVEL_NONE, ROTATION_TYPE_TAP},
-    {0, 360, 1, "2PI Limit", MOTOR_SHAKE_LEVEL_LOW, ROTATION_TYPE_SHAKE},
-    {-90, 90, 1, "PI Limit", MOTOR_SHAKE_LEVEL_MID, ROTATION_TYPE_SHAKE},
+    {0, 0, -1, "No Limit", MOTOR_STRENGTH_LEVEL_NONE, ROTATION_TYPE_NONE},
+    {0, 0, -1, "Auto Center", MOTOR_STRENGTH_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 60, 1, "Switch", MOTOR_STRENGTH_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 360, 6, "6 taps", MOTOR_STRENGTH_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 360, 10, "10 taps", MOTOR_STRENGTH_LEVEL_NONE, ROTATION_TYPE_TAP},
+    {0, 360, 1, "2PI Limit", MOTOR_STRENGTH_LEVEL_LOW, ROTATION_TYPE_DRAG},
+    {-90, 90, 1, "PI Limit", MOTOR_STRENGTH_LEVEL_HIGH, ROTATION_TYPE_DRAG},
 };
 
 int max_option_index = sizeof(motor_option_t) / sizeof(struct motor_option_s);
 int option_index = 0;
 int last_option_index = -1;
 
-static void pulsation(int time , float Amplitude)
+static void shake(int time , float Amplitude)
 {
     motor.controller = MotionControlType::torque;
 
@@ -66,7 +66,7 @@ void Motion::init()
 #endif
     motor.foc_modulation = FOCModulationType::SpaceVectorPWM;
     motor.torque_controller = TorqueControlType::voltage;
-    motor.controller = MotionControlType::torque;
+    motor.controller = MotionControlType::velocity;
     motor.sensor_direction = Direction::CCW;
 
 #ifdef MOTOR_2804
@@ -118,7 +118,7 @@ void Motion::task_motor(void)
     int i = 0;
     bool is_enough = false;
     int arr[100] = {0};
-
+    target_angle = 0;
     while(1)
     {
         sensor.update();
@@ -137,11 +137,11 @@ void Motion::task_motor(void)
 
         // now_angle= sensor.getAngle() * 180.0f / PI;
         real_angle = now_angle - zero_angle;
-        vTaskDelay(1);
+
         if(last_option_index != option_index)
         {
             motor_option = motor_option_t[option_index];
-            pulsation(5, 0.1);
+            shake(5, 0.1);
             if (screen.is_init) 
                 lv_knob_reflash();
             zero_angle = sensor.getAngle()/PI*180.0f;
@@ -150,9 +150,13 @@ void Motion::task_motor(void)
             cur_angle_end = motor_option.angle_begin+(motor_option.angle_end - motor_option.angle_begin) / motor_option.range ;
             cur_angle_begin = motor_option.angle_begin;
             now_range = 0;
+
+            // if(bleKeyboard.isConnected()) {
+            //     bleKeyboard.write(KEY_MEDIA_VOLUME_DOWN);
+            // }
         }
         motor_run();
-        
+
         motor.loopFOC();
         if( motor.controller == MotionControlType::angle)
         {
@@ -173,13 +177,16 @@ void Motion::motor_run()
     switch (motor_option.motor_ratotion_type)
     {
         case ROTATION_TYPE_NONE:
+            motor.PID_velocity.I = 1.0;
             target_angle = 0;
             motor.controller = MotionControlType::torque;
             break;
         case ROTATION_TYPE_TAP:
+            motor.PID_velocity.I = 1.0;
             position_check();
             break;
-        case ROTATION_TYPE_SHAKE:
+        case ROTATION_TYPE_DRAG:
+            motor.PID_velocity.I = 1.6;
             shake_mode();
             break;
     }
@@ -216,45 +223,36 @@ void Motion::position_check()
 
 void Motion::shake_mode()
 {
-    static int last_zhendong = 0; //震动标志位
     target_angle = 0;
 
     if(real_angle>motor_option.angle_end)
     {
+        motor.PID_velocity.limit = 0.25;
         motor.controller = MotionControlType::angle;
         target_angle = motor_option.angle_end + zero_angle;
     }
     else if(real_angle<motor_option.angle_begin)
     {
+        motor.PID_velocity.limit = 0.25;
+
         motor.controller = MotionControlType::angle;
         target_angle = motor_option.angle_begin + zero_angle;
     }
-
-    else if((real_angle%10==0) && (real_angle>motor_option.angle_begin+10) && (real_angle<motor_option.angle_end-10))
-    {
-        if(!last_zhendong)
-        {
-            last_zhendong = true;
-            switch (motor_option.motor_shake_lv)
-            {
-                case MOTOR_SHAKE_LEVEL_LOW:
-                    pulsation(8, 0.1);
-                    break;
-                case MOTOR_SHAKE_LEVEL_MID:
-                    pulsation(10, 0.1);
-                    break;
-                case MOTOR_SHAKE_LEVEL_HIGH:
-                    pulsation(15, 0.1);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
     else
     {
-        motor.controller = MotionControlType::torque;
-        last_zhendong = false;
+        switch(motor_option.motor_shake_lv)
+        {
+            case MOTOR_STRENGTH_LEVEL_LOW:
+                motor.PID_velocity.limit = 0.25;
+                break;
+            case MOTOR_STRENGTH_LEVEL_HIGH:
+                motor.PID_velocity.limit = 0.4;
+                break;
+            default:
+                motor.PID_velocity.limit = 0.25;
+                break;
+        }
+        motor.controller = MotionControlType::velocity;
     }
     motor.loopFOC();
 }
