@@ -12,7 +12,19 @@
         "vector": "cpp",
         "string_view": "cpp",
         "initializer_list": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "atomic": "cpp",
+        "iterator": "cpp",
+        "optional": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "streambuf": "cpp",
+        "system_error": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "algorithm": "cpp"
     },
     "EIDE.SerialPortMonitor.BaudRate": 9600
 }
