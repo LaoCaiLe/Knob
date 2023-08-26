@@ -186,7 +186,7 @@ void Motion::motor_run()
             position_check();
             break;
         case ROTATION_TYPE_DRAG:
-            motor.PID_velocity.I = 1.6;
+            motor.PID_velocity.I = 1.4;
             shake_mode();
             break;
     }

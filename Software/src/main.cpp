@@ -6,11 +6,9 @@
 #include "motor.h"
 #include "lcd.h"
 #include "led.h"
-#include "scale.h"
 
 Motion motion;
 Screen screen;
-Scale scale;
 ColorLed Cled(LED_PIN, LED_COUNT);
 
 void TaskOnMotor(void* params)
@@ -34,7 +32,6 @@ void setup() {
 
     screen.init();
     motion.init();
-    scale.init(SCALE_OUT_PIN, SCALE_SCK_PIN);
     Cled.init();
 
     xTaskCreatePinnedToCore(TaskOnMotor, "TaskOnMotor", 4096, NULL, 2, NULL, 0);
