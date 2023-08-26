@@ -135,7 +135,6 @@ void Motion::task_motor(void)
         else
             now_angle = meanFilterFloat(arr, sizeof(arr)/sizeof(int));
 
-        // now_angle= sensor.getAngle() * 180.0f / PI;
         real_angle = now_angle - zero_angle;
 
         if(last_option_index != option_index)
@@ -151,9 +150,6 @@ void Motion::task_motor(void)
             cur_angle_begin = motor_option.angle_begin;
             now_range = 0;
 
-            // if(bleKeyboard.isConnected()) {
-            //     bleKeyboard.write(KEY_MEDIA_VOLUME_DOWN);
-            // }
         }
         motor_run();
 
