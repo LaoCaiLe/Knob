@@ -4,7 +4,7 @@
 
 参照GitHub [SmartKnob](github.com/scottbez1/smartknob)项目制作的智能旋钮，3D模型、硬件和UI画面参考SmartKnob，软件代码独立设计。
 
-<img src="E:\Tencent\Tencent Files\MobileFile\knob.jpg" alt="knob" style="zoom:20%;" />
+![knob](https://github.com/LaoCaiLe/Knob/assets/70246846/f3e0c6c2-2f93-40c8-bda4-672a11888ccc)
 
 ## 2. 软件
 
