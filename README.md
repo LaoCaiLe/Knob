@@ -4,7 +4,7 @@
 
 参照GitHub [SmartKnob](github.com/scottbez1/smartknob)项目制作的智能旋钮，3D模型、硬件和UI画面参考SmartKnob，软件代码独立设计。
 
-![knob](https://github.com/LaoCaiLe/Knob/assets/70246846/f3e0c6c2-2f93-40c8-bda4-672a11888ccc)
+<img src="https://github.com/LaoCaiLe/Knob/assets/70246846/f3e0c6c2-2f93-40c8-bda4-672a11888ccc" alt="knob" style="zoom:90" />
 
 ## 2. 软件
 
@@ -21,9 +21,21 @@
 
 ## 4. 功能
 
+基本功能：
+
 - 定位（挡位）
 - 阻尼
 - 震动反馈
+
+代码编写功能模式
+
+- 无限制模式
+- 自动回中心点模式
+- 0/1开关模式
+- 2PI 6挡位模式
+- 2PI 10挡位模式
+- 2PI限制 旋转带阻尼
+- PI限制 旋转带高阻尼
 
 ## 5. todo
 
